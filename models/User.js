@@ -2,10 +2,10 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
 const userSchema = new mongoose.Schema({
-    first_name: { type: String, required: true, max: 25 },
-    last_name: { type: String, required: true, max: 25 },
+    firstName: { type: String, required: true, max: 25 },
+    lastName: { type: String, required: true, max: 25 },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    mobile_number: { type: String, required: true },
+    mobileNumber: { type: String, required: true },
     birthdate: { type: Date, default: null }, // Make birthdate optional
     gender: { type: String, default: null }, // Make gender optional
     password: { type: String, required: true, select: false },

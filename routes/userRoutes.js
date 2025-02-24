@@ -12,13 +12,13 @@ dotenv.config();
 
 // Signup Endpoint
 router.post('/signup', async (req, res) => {
-    const { first_name, last_name, email, mobile_number, password } = req.body;
+    const { firstName, lastName, email, mobileNumber, password } = req.body;
     try {
-        const newUser  = new User({ first_name, last_name, email, mobile_number, password });
+        const newUser  = new User({ firstName, lastName, email, mobileNumber, password });
         await newUser .save();
 
         // Create a token
-        const token = jwt.sign({ id: newUser ._id, first_name, last_name, email, mobile_number }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ id: newUser ._id, firstName, lastName, email, mobileNumber }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
         res.status(201).json({ message: 'User  registered successfully', token });
     } catch (error) {
@@ -56,9 +56,9 @@ router.get('/profile', verifyToken, async (req, res) => {
 
 // Update User Profile
 router.put('/profile', verifyToken, async (req, res) => {
-    const { first_name, last_name, mobile_number, birthdate, gender } = req.body;
+    const { firstName, lastName, mobileNumber, birthdate, gender } = req.body;
     try {
-        const updatedUser  = await User.findByIdAndUpdate(req.userId, { first_name, last_name, mobile_number, birthdate, gender }, { new: true });
+        const updatedUser  = await User.findByIdAndUpdate(req.userId, { firstName, lastName, mobileNumber, birthdate, gender }, { new: true });
         res.status(200).json(updatedUser );
     } catch (error) {
         res.status(500).json({ error: error.message });
