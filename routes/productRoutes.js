@@ -6,7 +6,7 @@ const router = express.Router();
 
 // Get Product List API
 router.get('/', async (req, res) => {
-    const { limit = 10, offset = 0 } = req.query; // Default values for limit and offset
+    const { limit = 9, offset = 0 } = req.query; // Default values for limit and offset
 
     try {
         // Fetch products with pagination
@@ -29,12 +29,12 @@ router.get('/', async (req, res) => {
 });
 
 // Get Product Detail API
-router.get('/:productId', async (req, res) => {
-    const { productId } = req.params;
+router.get('/:id', async (req, res) => {
+    const { id } = req.params;
 
     try {
         // Fetch product by ID
-        const product = await Product.findById(productId).populate('SubcategoryID', 'SubcategoryName');
+        const product = await Product.findById(id).populate('SubcategoryID', 'SubcategoryName').populate('CategoryID', 'CategoryName');
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }

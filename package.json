@@ -2,12 +2,21 @@
   "name": "shopping-kart",
   "version": "1.0.0",
   "description": "",
+  "homepage": "https://github.com/Rahul-rk007/shopping-kart-api#readme",
+  "bugs": {
+    "url": "https://github.com/Rahul-rk007/shopping-kart-api/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rahul-rk007/shopping-kart-api.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.3",
@@ -17,5 +26,6 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.10.1",
     "nodemailer": "^6.10.0"
-  }
+  },
+  "devDependencies": {}
 }
