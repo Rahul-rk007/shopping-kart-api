@@ -76,7 +76,7 @@ const subcategories = [
     {
         SubcategoryName: 'Toys',
         CategoryID: new ObjectId('67bd98339496c970d120eb6c'), // Use new ObjectId
-        Description: 'Toys for children of all ages.',
+        Description: 'Children\'s Toys for all ages.',
         ImageURL: 'https://example.com/images/children-toys.jpg',
         IsActive: true,
     },
