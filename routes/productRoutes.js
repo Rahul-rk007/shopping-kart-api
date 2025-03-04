@@ -8,16 +8,24 @@ const router = express.Router();
 
 // Get Product List API
 router.get("/", async (req, res) => {
-  const { limit = 9, offset = 0 } = req.query; // Default values for limit and offset
+  const { limit = 9, offset = 0, subcategoryId } = req.query; // Default values for limit and offset
 
   try {
+    // Build the query based on the provided subcategoryId
+    const query = { IsActive: true }; // Start with active products
+
+    // If subcategoryId is provided, add it to the query
+    if (subcategoryId) {
+      query.SubcategoryID = subcategoryId; // Filter by subcategory ID
+    }
+
     // Fetch products with pagination
-    const products = await Product.find({ IsActive: true })
+    const products = await Product.find(query)
       .skip(Number(offset)) // Skip the number of documents specified by offset
       .limit(Number(limit)) // Limit the number of documents returned
       .populate("SubcategoryID", "SubcategoryName"); // Populate subcategory name
 
-    const totalProducts = await Product.countDocuments({ IsActive: true }); // Get total count of active products
+    const totalProducts = await Product.countDocuments(query); // Get total count of active products
 
     res.status(200).json({
       total: totalProducts,
