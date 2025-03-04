@@ -170,7 +170,7 @@ router.post("/reset-password/:token", async (req, res) => {
 });
 
 // Change Password Endpoint
-router.put("/change-password", verifyToken, async (req, res) => {
+router.post("/change-password", verifyToken, async (req, res) => {
   const { currentPassword, newPassword } = req.body;
 
   try {
