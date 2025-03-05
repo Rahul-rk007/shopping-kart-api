@@ -16,7 +16,7 @@ router.get("/countries", async (req, res) => {
 });
 
 // Get states by country ID API
-router.get("/states/:countryId", async (req, res) => {
+router.get("/:countryId", async (req, res) => {
   const { countryId } = req.params;
 
   try {

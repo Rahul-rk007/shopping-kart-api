@@ -8,6 +8,7 @@ const cartRoutes = require("./routes/cartRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const shippingAddressRoutes = require("./routes/shippingAddressRoutes");
 const contactUsRoutes = require("./routes/contactUsRoutes");
+const stateRoutes = require("./routes/stateRoutes");
 const connectDB = require("./config/db"); // Import the database connection
 require("dotenv").config(); // Load environment variables from .env file
 const cors = require("cors");
@@ -38,6 +39,7 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/order", orderRoutes);
 app.use("/api/shipping-addresses", shippingAddressRoutes);
 app.use("/api/contact", contactUsRoutes);
+app.use("/api/state/", stateRoutes);
 
 // Start the server
 app.listen(PORT, () => {
