@@ -26,7 +26,7 @@ router.post("/signup", async (req, res) => {
     // Create a token
     const token = jwt.sign(
       {
-        user: { id: newUser._id, firstName, lastName, email, mobileNumber },
+        user: { id: newUser._id, email, mobileNumber },
       },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
@@ -53,8 +53,6 @@ router.post("/login", async (req, res) => {
       {
         user: {
           id: user._id,
-          firstName: user.firstName,
-          lastName: user.lastName,
           email: user.email,
           mobileNumber: user.mobileNumber,
         },

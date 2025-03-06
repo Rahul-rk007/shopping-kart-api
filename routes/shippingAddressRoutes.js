@@ -9,7 +9,7 @@ const router = express.Router();
 // Get Shipping Addresses List API
 router.get("/", verifyToken, async (req, res) => {
   try {
-    const shippingAddresses = await ShippingAddress.find({ user: req.user.id })
+    const shippingAddresses = await ShippingAddress.find({ user: req.userId })
       .populate("state", "stateName") // Populate state name
       .populate("country", "countryName"); // Populate country name
     res.status(200).json(shippingAddresses);
@@ -39,6 +39,8 @@ router.get("/:addressId", verifyToken, async (req, res) => {
 
 // Add Shipping Address API
 router.post("/", verifyToken, async (req, res) => {
+  console.log(req.body);
+
   const {
     fullName,
     phoneNumber,
@@ -69,7 +71,7 @@ router.post("/", verifyToken, async (req, res) => {
   try {
     // Create a new shipping address
     const newShippingAddress = new ShippingAddress({
-      user: req.user.id, // Set the user from the token
+      user: req.userId, // Set the user from the token
       fullName,
       phoneNumber,
       address1,
@@ -91,8 +93,8 @@ router.post("/", verifyToken, async (req, res) => {
 });
 
 // Edit Shipping Address API
-router.put("/:addressId", verifyToken, async (req, res) => {
-  const { addressId } = req.params;
+router.put("/:id", verifyToken, async (req, res) => {
+  const { id } = req.params;
   const {
     fullName,
     phoneNumber,
@@ -122,10 +124,10 @@ router.put("/:addressId", verifyToken, async (req, res) => {
 
   try {
     // Find the shipping address by ID
-    const shippingAddress = await ShippingAddress.findById(addressId);
+    const shippingAddress = await ShippingAddress.findById(id);
 
     // Check if the address exists and belongs to the user
-    if (!shippingAddress || shippingAddress.user.toString() !== req.user.id) {
+    if (!shippingAddress || shippingAddress.user.toString() !== req.userId) {
       return res.status(404).json({ message: "Shipping address not found" });
     }
 
