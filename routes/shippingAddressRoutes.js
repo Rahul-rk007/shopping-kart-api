@@ -151,4 +151,29 @@ router.put("/:id", verifyToken, async (req, res) => {
   }
 });
 
+// Delete Shipping Address API
+router.delete("/:id", verifyToken, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Check if the shipping address exists and belongs to the user
+    const shippingAddress = await ShippingAddress.findOne({
+      _id: id,
+      user: req.userId,
+    });
+
+    if (!shippingAddress) {
+      return res.status(404).json({ message: "Shipping address not found" });
+    }
+
+    // Delete the shipping address
+    await ShippingAddress.deleteOne({ _id: id });
+
+    res.status(200).json({ message: "Shipping address deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 module.exports = router;
