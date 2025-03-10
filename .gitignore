@@ -1,5 +1,6 @@
 .env
 node_modules/
 *.log
+uploads/
 
 package-lock.json
