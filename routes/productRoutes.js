@@ -8,15 +8,34 @@ const router = express.Router();
 
 // Get Product List API
 router.get("/", async (req, res) => {
-  const { limit = 9, offset = 0, subcategoryId } = req.query; // Default values for limit and offset
+  console.log(req.query);
+
+  const {
+    limit = 9,
+    offset = 0,
+    subcategoryId,
+    minPrice,
+    maxPrice,
+    color, // Extract the color parameter
+  } = req.query; // Default values for limit and offset
 
   try {
-    // Build the query based on the provided subcategoryId
+    // Build the query based on the provided parameters
     const query = { IsActive: true }; // Start with active products
 
     // If subcategoryId is provided, add it to the query
     if (subcategoryId) {
       query.SubcategoryID = subcategoryId; // Filter by subcategory ID
+
+      // If minPrice and maxPrice are provided, add them to the query
+      if (minPrice && maxPrice) {
+        query.Price = { $gte: Number(minPrice), $lte: Number(maxPrice) }; // Filter by price range
+      }
+    }
+
+    // If color is provided, add it to the query
+    if (color) {
+      query.Color = color; // Assuming your product schema has a Color field
     }
 
     // Fetch products with pagination
@@ -124,6 +143,36 @@ router.get("/new-arrivals", async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching new arrivals:", error); // Log the error for debugging
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/colors", async (req, res) => {
+  const { subcategoryId, minPrice, maxPrice } = req.query;
+
+  try {
+    // Build the query based on the provided parameters
+    const query = { IsActive: true }; // Start with active products
+
+    // If subcategoryId is provided, add it to the query
+    if (subcategoryId) {
+      query.SubcategoryID = subcategoryId; // Filter by subcategory ID
+    }
+
+    // If minPrice and maxPrice are provided, add them to the query
+    if (minPrice && maxPrice) {
+      query.Price = { $gte: Number(minPrice), $lte: Number(maxPrice) }; // Filter by price range
+    }
+
+    // Aggregate to get color counts
+    const colorCounts = await Product.aggregate([
+      { $match: query }, // Match the query
+      { $group: { _id: "$Color", count: { $sum: 1 } } }, // Group by color and count
+      { $project: { color: "$_id", count: "$count", _id: 0 } }, // Format the output
+    ]);
+
+    res.status(200).json(colorCounts);
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
