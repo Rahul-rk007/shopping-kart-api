@@ -46,11 +46,23 @@ router.get("/", async (req, res) => {
 
     const totalProducts = await Product.countDocuments(query); // Get total count of active products
 
+    const productsWithImages = products.map((product) => {
+      return {
+        ...product.toObject(), // Convert mongoose document to plain object
+        ImageURLs: product.ImageURLs.map((image) => {
+          // Assuming images are stored in 'uploads/products/<productId>/imageName'
+          return `${req.protocol}://${req.get("host")}/uploads/products/${
+            product._id
+          }/${image}`;
+        }),
+      };
+    });
+
     res.status(200).json({
       total: totalProducts,
       limit: Number(limit),
       offset: Number(offset),
-      products,
+      products: productsWithImages,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -69,7 +81,16 @@ router.get("/detail/:id", async (req, res) => {
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
-    res.status(200).json(product);
+    const productWithImageUrls = {
+      ...product.toObject(), // Convert mongoose document to plain object
+      ImageURLs: product.ImageURLs.map((image) => {
+        // Construct the full URL for each image
+        return `${req.protocol}://${req.get("host")}/uploads/products/${
+          product._id
+        }/${image}`;
+      }),
+    };
+    res.status(200).json(productWithImageUrls);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -94,11 +115,23 @@ router.get("/featured", async (req, res) => {
       IsActive: true,
     }); // Get total count of featured products
 
+    const productsWithImageUrls = featuredProducts.map((product) => {
+      return {
+        ...product.toObject(), // Convert mongoose document to plain object
+        ImageURLs: product.ImageURLs.map((image) => {
+          // Construct the full URL for each image
+          return `${req.protocol}://${req.get("host")}/uploads/products/${
+            product._id
+          }/${image}`;
+        }),
+      };
+    });
+
     res.status(200).json({
       total: totalFeaturedProducts,
       limit: Number(limit),
       offset: Number(offset),
-      featuredProducts,
+      featuredProducts: productsWithImageUrls,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -134,12 +167,24 @@ router.get("/new-arrivals", async (req, res) => {
     // Get total count of new arrivals
     const totalNewArrivals = await Product.countDocuments(query);
 
+    const productsWithImageUrls = newArrivals.map((product) => {
+      return {
+        ...product.toObject(), // Convert mongoose document to plain object
+        ImageURLs: product.ImageURLs.map((image) => {
+          // Construct the full URL for each image
+          return `${req.protocol}://${req.get("host")}/uploads/products/${
+            product._id
+          }/${image}`;
+        }),
+      };
+    });
+
     // Send response
     res.status(200).json({
       total: totalNewArrivals,
       limit: Number(limit),
       offset: Number(offset),
-      newArrivals,
+      newArrivals: productsWithImageUrls,
     });
   } catch (error) {
     console.error("Error fetching new arrivals:", error); // Log the error for debugging
@@ -174,6 +219,17 @@ router.get("/colors", async (req, res) => {
     res.status(200).json(colorCounts);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/:subcategoryId", async (req, res) => {
+  const { subcategoryId } = req.params;
+
+  try {
+    const products = await Product.find({ SubcategoryID: subcategoryId });
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching products", error });
   }
 });
 

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Upload Product Images</title>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      /* Basic styles for the drop area */
+      .drop-area {
+        border: 2px dashed #ccc;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        margin: 10px 0;
+        cursor: pointer;
+      }
+      .drop-area.highlight {
+        border-color: #333;
+      }
+      /* Styles for the image preview */
+      .image-preview {
+        display: flex;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
+      .image-preview img {
+        max-width: 100px;
+        max-height: 100px;
+        margin: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Upload Product Images</h1>
+    <form
+      id="uploadForm"
+      enctype="multipart/form-data"
+      action="/api/upload/product"
+      method="POST"
+    >
+      <div>
+        <label for="category">Category:</label>
+        <select id="category" name="category">
+          <option value="">Select Category</option>
+          <!-- Categories will be populated here -->
+        </select>
+      </div>
+      <div>
+        <label for="subcategory">Subcategory:</label>
+        <select id="subcategory" name="subcategory" disabled>
+          <option value="">Select Subcategory</option>
+          <!-- Subcategories will be populated here -->
+        </select>
+      </div>
+      <div>
+        <label for="product">Product:</label>
+        <select id="product" name="product" disabled>
+          <option value="">Select Product</option>
+          <!-- Products will be populated here -->
+        </select>
+      </div>
+      <div class="drop-area" id="drop-area">
+        <label for="images" style="cursor: pointer"
+          >Drag & drop images here or click to select files</label
+        >
+        <input
+          type="file"
+          id="images"
+          name="images"
+          multiple
+          required
+          accept="image/*"
+          style="opacity: 0; position: absolute; left: -9999px"
+        />
+      </div>
+      <div class="image-preview" id="image-preview"></div>
+      <button type="submit">Upload Images</button>
+    </form>
+
+    <script>
+      // Fetch categories and populate the category dropdown
+      fetch("/api/category")
+        .then((response) => response.json())
+        .then((categories) => {
+          const categorySelect = document.getElementById("category");
+          categories.forEach((category) => {
+            const option = document.createElement("option");
+            option.value = category._id;
+            option.textContent = category.CategoryName;
+            categorySelect.appendChild(option);
+          });
+        });
+
+      // Fetch subcategories based on selected category
+      document
+        .getElementById("category")
+        .addEventListener("change", function () {
+          const categoryId = this.value;
+          const subcategorySelect = document.getElementById("subcategory");
+          subcategorySelect.innerHTML =
+            '<option value="">Select Subcategory</option>'; // Reset subcategory options
+          subcategorySelect.disabled = !categoryId;
+
+          if (categoryId) {
+            fetch(`/api/subcategory/${categoryId}`)
+              .then((response) => response.json())
+              .then((subcategories) => {
+                subcategories.forEach((subcategory) => {
+                  const option = document.createElement("option");
+                  option.value = subcategory._id;
+                  option.textContent = subcategory.SubcategoryName;
+                  subcategorySelect.appendChild(option);
+                });
+              });
+          }
+        });
+
+      // Fetch products based on selected subcategory
+      document
+        .getElementById("subcategory")
+        .addEventListener("change", function () {
+          const subcategoryId = this.value;
+          const productSelect = document.getElementById("product");
+          productSelect.innerHTML = '<option value="">Select Product</option>'; // Reset product options
+          productSelect.disabled = !subcategoryId;
+
+          if (subcategoryId) {
+            fetch(`/api/product/${subcategoryId}`)
+              .then((response) => response.json())
+              .then((products) => {
+                products.forEach((product) => {
+                  const option = document.createElement("option");
+                  option.value = product._id;
+                  option.textContent = product.ProductName;
+                  productSelect.appendChild(option);
+                });
+              });
+          }
+        });
+
+      // Handle drag-and-drop functionality
+      const dropArea = document.getElementById("drop-area");
+      const fileInput = document.getElementById("images");
+      const imagePreview = document.getElementById("image-preview");
+
+      dropArea.addEventListener("click", () => {
+        fileInput.click(); // Trigger file input click
+      });
+
+      dropArea.addEventListener("dragover", (event) => {
+        event.preventDefault(); // Prevent default behavior
+        dropArea.classList.add("highlight"); // Highlight the drop area
+      });
+
+      dropArea.addEventListener("dragleave", () => {
+        dropArea.classList.remove("highlight"); // Remove highlight
+      });
+
+      dropArea.addEventListener("drop", (event) => {
+        event.preventDefault(); // Prevent default behavior
+        dropArea.classList.remove("highlight"); // Remove highlight
+        const files = event.dataTransfer.files; // Get dropped files
+        handleFiles(files); // Handle the files
+      });
+
+      fileInput.addEventListener("change", (event) => {
+        const files = event.target.files; // Get selected files
+        handleFiles(files); // Handle the files
+      });
+
+      function handleFiles(files) {
+        // Clear previous previews
+        imagePreview.innerHTML = "";
+
+        // Loop through the files and create image previews
+        Array.from(files).forEach((file) => {
+          // Check if the file is an image
+          if (file.type.startsWith("image/")) {
+            const img = document.createElement("img");
+            img.src = URL.createObjectURL(file); // Create a URL for the image
+            img.onload = () => {
+              URL.revokeObjectURL(img.src); // Free memory
+            };
+            imagePreview.appendChild(img); // Add the image to the preview area
+          }
+        });
+      }
+
+      // Handle form submission
+      document
+        .getElementById("uploadForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault(); // Prevent default form submission
+
+          console.log("Form submitted"); // Debugging statement
+
+          // Validate form fields
+          const images = document.getElementById("images").files;
+          if (images.length === 0) {
+            console.error("No images selected"); // Error message
+            alert("Please select at least one image."); // Alert user
+            return;
+          }
+
+          // Get the selected product ID
+          const productId = document.getElementById("product").value;
+          if (!productId) {
+            console.error("No product selected"); // Error message
+            alert("Please select a product."); // Alert user
+            return;
+          }
+
+          // Construct the URL for the fetch request
+          const url = `/api/upload/product/${productId}`;
+
+          // Create FormData object
+          const formData = new FormData(this);
+          console.log(formData);
+          console.log(this);
+
+          // Proceed with form submission logic
+          fetch(url, {
+            method: "POST",
+            body: formData,
+          })
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error("Network response was not ok");
+              }
+              return response.json();
+            })
+            .then((data) => {
+              console.log("Success:", data);
+              alert("Images uploaded successfully!"); // Notify user of success
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              alert("Error uploading images. Please try again."); // Notify user of error
+            });
+        });
+    </script>
+  </body>
+</html>

@@ -12,9 +12,15 @@ const stateRoutes = require("./routes/stateRoutes");
 const connectDB = require("./config/db"); // Import the database connection
 require("dotenv").config(); // Load environment variables from .env file
 const cors = require("cors");
+const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 5001;
+const uploadRoutes = require("./routes/uploadRoutes"); // Import the upload routes
+
+// Use upload routes
+app.use(express.static(path.join(__dirname, "public"))); // Ensure this line is present
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Middleware
 app.use(bodyParser.json()); // Parse JSON bodies
@@ -40,6 +46,7 @@ app.use("/api/order", orderRoutes);
 app.use("/api/shipping-addresses", shippingAddressRoutes);
 app.use("/api/contact", contactUsRoutes);
 app.use("/api/state/", stateRoutes);
+app.use("/api/upload", uploadRoutes);
 
 // Start the server
 app.listen(PORT, () => {
