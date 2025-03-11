@@ -20,7 +20,7 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     // Remove single quotes from the original file name
     const sanitizedFileName = file.originalname.replace(/'/g, ""); // Remove single quotes
-    cb(null, formattedDate() + sanitizedFileName); // Append timestamp to filename
+    cb(null, sanitizedFileName); // Append timestamp to filename
   },
 });
 
@@ -56,7 +56,7 @@ router.post(
       // Remove single quotes from the filename for the URL
       const sanitizedFileName = file.originalname.replace(/'/g, ""); // Remove single quotes
 
-      return `${formattedDate()}${sanitizedFileName}`; // Create URL with sanitized name
+      return `${sanitizedFileName}`; // Create URL with sanitized name
     });
 
     try {
