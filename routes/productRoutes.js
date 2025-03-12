@@ -51,9 +51,9 @@ router.get("/", async (req, res) => {
         ...product.toObject(), // Convert mongoose document to plain object
         ImageURLs: product.ImageURLs.map((image) => {
           // Assuming images are stored in 'uploads/products/<productId>/imageName'
-          return `${req.protocol}://${req.get("host")}/uploads/products/${
-            product._id
-          }/${image}`;
+          return `${req.protocol}://${req.get(
+            "host"
+          )}/uploads/products/${image}`;
         }),
       };
     });
@@ -85,9 +85,7 @@ router.get("/detail/:id", async (req, res) => {
       ...product.toObject(), // Convert mongoose document to plain object
       ImageURLs: product.ImageURLs.map((image) => {
         // Construct the full URL for each image
-        return `${req.protocol}://${req.get("host")}/uploads/products/${
-          product._id
-        }/${image}`;
+        return `${req.protocol}://${req.get("host")}/uploads/products/${image}`;
       }),
     };
     res.status(200).json(productWithImageUrls);
@@ -120,9 +118,9 @@ router.get("/featured", async (req, res) => {
         ...product.toObject(), // Convert mongoose document to plain object
         ImageURLs: product.ImageURLs.map((image) => {
           // Construct the full URL for each image
-          return `${req.protocol}://${req.get("host")}/uploads/products/${
-            product._id
-          }/${image}`;
+          return `${req.protocol}://${req.get(
+            "host"
+          )}/uploads/products/${image}`;
         }),
       };
     });
@@ -172,9 +170,9 @@ router.get("/new-arrivals", async (req, res) => {
         ...product.toObject(), // Convert mongoose document to plain object
         ImageURLs: product.ImageURLs.map((image) => {
           // Construct the full URL for each image
-          return `${req.protocol}://${req.get("host")}/uploads/products/${
-            product._id
-          }/${image}`;
+          return `${req.protocol}://${req.get(
+            "host"
+          )}/uploads/products/${image}`;
         }),
       };
     });

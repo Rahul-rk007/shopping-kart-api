@@ -8,6 +8,7 @@ const router = express.Router();
 // Add to Cart API
 router.post("/", verifyToken, async (req, res) => {
   const { productId, quantity } = req.body;
+  console.log(req.body);
 
   try {
     // Check if the product exists
@@ -35,6 +36,7 @@ router.post("/", verifyToken, async (req, res) => {
       // Add the new product to the cart with price and image
       cart.products.push({
         product: productId,
+        productName: product.ProductName,
         quantity,
         price: product.Price, // Assuming product has a price field
         image: product.ImageURLs[0], // Assuming product has an image field
@@ -60,16 +62,29 @@ router.post("/", verifyToken, async (req, res) => {
 
 // Get User Cart API
 router.get("/", verifyToken, async (req, res) => {
-  console.log(req.user);
-
   try {
     const cart = await Cart.findOne({ user: req.userId }).populate(
       "products.product"
     );
+
     if (!cart) {
       return res.status(404).json({ message: "Cart not found" });
     }
-    res.status(200).json(cart);
+    const domain = `${req.protocol}://${req.get("host")}/uploads/products/`;
+
+    // Map through the products to update the image URLs
+    const updatedProducts = cart.products.map((item) => {
+      return {
+        ...item.toObject(), // Convert mongoose document to plain object
+        image: `${domain}${item.image}`, // Append the domain URL to the image filename
+      };
+    });
+
+    // Return the cart with updated products
+    res.status(200).json({
+      ...cart.toObject(), // Convert cart to a plain object
+      products: updatedProducts, // Replace products with the new array
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });

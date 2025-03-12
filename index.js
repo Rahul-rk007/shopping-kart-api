@@ -17,6 +17,7 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 5001;
 const uploadRoutes = require("./routes/uploadRoutes"); // Import the upload routes
+const moveRoutes = require("./routes/moveRoutes"); // Import the upload routes
 
 // Use upload routes
 app.use(express.static(path.join(__dirname, "public"))); // Ensure this line is present
@@ -47,6 +48,7 @@ app.use("/api/shipping-addresses", shippingAddressRoutes);
 app.use("/api/contact", contactUsRoutes);
 app.use("/api/state/", stateRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/move", moveRoutes);
 
 // Start the server
 app.listen(PORT, () => {
