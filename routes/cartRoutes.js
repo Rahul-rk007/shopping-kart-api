@@ -8,7 +8,6 @@ const router = express.Router();
 // Add to Cart API
 router.post("/", verifyToken, async (req, res) => {
   const { productId, quantity } = req.body;
-  console.log(req.body);
 
   try {
     // Check if the product exists
@@ -63,9 +62,10 @@ router.post("/", verifyToken, async (req, res) => {
 // Get User Cart API
 router.get("/", verifyToken, async (req, res) => {
   try {
-    const cart = await Cart.findOne({ user: req.userId }).populate(
-      "products.product"
-    );
+    const cart = await Cart.findOne({ user: req.userId }).populate({
+      path: "products.product",
+      select: "ProductName Price",
+    });
 
     if (!cart) {
       return res.status(404).json({ message: "Cart not found" });
@@ -92,7 +92,7 @@ router.get("/", verifyToken, async (req, res) => {
 });
 
 // Delete from Cart API
-router.delete("/:productId", verifyToken, async (req, res) => {
+router.delete("/remove/:productId", verifyToken, async (req, res) => {
   const { productId } = req.params;
 
   try {
@@ -116,6 +116,102 @@ router.delete("/:productId", verifyToken, async (req, res) => {
     res
       .status(200)
       .json({ message: "Product removed from cart successfully!", cart });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Increase product quantity in the cart
+router.patch("/increase/:productId", verifyToken, async (req, res) => {
+  const { productId } = req.params;
+
+  try {
+    const cart = await Cart.findOne({ user: req.userId });
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
+
+    // Find the product in the cart
+    const product = cart.products.find(
+      (item) => item.product.toString() === productId
+    );
+    if (!product) {
+      return res.status(404).json({ message: "Product not found in cart" });
+    }
+
+    // Increase the quantity
+    product.quantity += 1;
+
+    // Recalculate the cart total
+    cart.cartTotal = cart.products.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    );
+
+    await cart.save();
+    res.status(200).json({ message: "Product quantity increased", cart });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Decrease product quantity in the cart
+router.patch("/decrease/:productId", verifyToken, async (req, res) => {
+  const { productId } = req.params;
+  console.log("====>", req.params);
+
+  try {
+    const cart = await Cart.findOne({ user: req.userId });
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
+
+    // Find the product in the cart
+    const product = cart.products.find(
+      (item) => item.product.toString() === productId
+    );
+    if (!product) {
+      return res.status(404).json({ message: "Product not found in cart" });
+    }
+
+    // Decrease the quantity
+    if (product.quantity > 1) {
+      product.quantity -= 1;
+    } else {
+      // If quantity is 1, remove the product from the cart
+      cart.products = cart.products.filter(
+        (item) => item.product.toString() !== productId
+      );
+    }
+
+    // Recalculate the cart total
+    cart.cartTotal = cart.products.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    );
+
+    await cart.save();
+    res.status(200).json({ message: "Product quantity decreased", cart });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Clear Cart API
+router.delete("/clear", verifyToken, async (req, res) => {
+  try {
+    console.log(req.userId);
+
+    const result = await Cart.deleteOne({ user: req.userId });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
+
+    res.status(200).json({ message: "Cart cleared successfully!" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });

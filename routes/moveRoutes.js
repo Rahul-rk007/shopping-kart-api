@@ -5,14 +5,11 @@ const path = require("path");
 const router = express.Router(); // Create a new router
 
 // Define the source and destination directories
-console.log(__dirname);
-
 const baseDir = path.dirname(__dirname); // Get the parent directory of the current file
 const sourceDir = path.join(baseDir, "uploads", "products"); // Correctly point to uploads/products
 const destinationDir = path.join(baseDir, "uploads", "products"); // Same for destination
 
 // Log the source directory path for debugging
-console.log("Source Directory:", sourceDir);
 
 // Function to move files from dynamic folders to the main products folder
 const moveFilesToProductsFolder = (req, res) => {
