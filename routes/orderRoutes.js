@@ -9,102 +9,105 @@ const router = express.Router();
 // Checkout API
 router.post("/checkout", verifyToken, async (req, res) => {
   const {
-    shippingAddressId, // ID of the existing shipping address (optional)
-    shippingAddress, // New shipping address details (optional)
+    shippingAddressId,
+    shippingAddress,
     paymentMethod,
     couponCode,
     couponDetails,
     phoneNumber,
     shippingMethod,
-    shippingCharges, // New field for shipping charges
+    shippingCharges, // This may be a string
   } = req.body;
 
   try {
-    // Find the user's cart
-    const cart = await Cart.findOne({ user: req.user.id });
+    const cart = await Cart.findOne({ user: req.userId });
     if (!cart || cart.products.length === 0) {
       return res.status(400).json({ message: "Cart is empty" });
     }
 
-    // Calculate subtotal
-    const subTotal = cart.cartTotal; // Assuming cartTotal is the subtotal before any discounts
+    const subTotal = cart.cartTotal;
 
     let shippingAddressIdToUse;
 
-    // Check if an existing shipping address ID is provided
     if (shippingAddressId) {
-      // Validate the existing shipping address
       const existingShippingAddress = await ShippingAddress.findById(
         shippingAddressId
       );
       if (
         !existingShippingAddress ||
-        existingShippingAddress.user.toString() !== req.user.id
+        existingShippingAddress.user.toString() !== req.userId
       ) {
         return res.status(400).json({ message: "Invalid shipping address" });
       }
-      shippingAddressIdToUse = existingShippingAddress._id; // Use the existing shipping address ID
+      shippingAddressIdToUse = existingShippingAddress._id;
     } else if (shippingAddress) {
-      // Create a new shipping address if no ID is provided
       const newShippingAddress = new ShippingAddress({
-        user: req.user.id,
-        ...shippingAddress, // Spread the shipping address fields
+        user: req.userId,
+        ...shippingAddress,
       });
-
-      // Save the new shipping address
       await newShippingAddress.save();
-      shippingAddressIdToUse = newShippingAddress._id; // Use the new shipping address ID
+      shippingAddressIdToUse = newShippingAddress._id;
     } else {
       return res.status(400).json({ message: "Shipping address is required" });
     }
 
-    // Calculate total amount
-    let totalAmount = subTotal + shippingCharges; // Start with subtotal and add shipping charges
+    // Convert shippingCharges to a number
+    const shippingChargesValue = parseFloat(shippingCharges);
+    if (isNaN(shippingChargesValue)) {
+      return res.status(400).json({ message: "Invalid shipping charges" });
+    }
+
+    let totalAmount = subTotal + shippingChargesValue; // Use the converted shipping charges
 
     // Apply coupon discount if applicable
     if (couponDetails && couponDetails.value) {
       let discountAmount;
+      const couponValue = parseFloat(couponDetails.value); // Convert to float
+
+      if (isNaN(couponValue)) {
+        return res.status(400).json({ message: "Invalid coupon value" });
+      }
       if (couponDetails.type === "percentage") {
-        discountAmount = (subTotal * couponDetails.value) / 100; // Calculate percentage discount
+        discountAmount = (subTotal * couponValue) / 100;
       } else if (couponDetails.type === "amount") {
-        discountAmount = couponDetails.value; // Fixed amount discount
+        discountAmount = couponValue;
       }
       totalAmount -= discountAmount; // Subtract discount from total amount
     }
 
-    // Create a new order
     const order = new Order({
-      user: req.user.id,
-      orderNumber: `ORD-${Date.now()}`, // Generate a unique order number
+      user: req.userId,
+      orderNumber: `ORD-${Date.now()}`,
       products: cart.products,
       subTotal: subTotal,
       couponCode: couponCode || null,
       couponDetails: couponDetails || null,
-      shippingAddress: shippingAddressIdToUse, // Reference to the shipping address
+      shippingAddress: shippingAddressIdToUse,
       phoneNumber: phoneNumber,
       shippingMethod: shippingMethod,
-      shippingCharges: shippingCharges,
+      shippingCharges: shippingChargesValue, // Store the numeric value
       totalAmount: totalAmount,
       paymentMethod: paymentMethod,
     });
 
-    // Save the order
     await order.save();
 
     // Clear the cart after successful checkout
-    await Cart.deleteOne({ user: req.user.id });
+    await Cart.deleteOne({ user: req.userId });
 
-    res.status(201).json({ message: "Order placed successfully!", order });
+    res.status(201).json({ message: "Your order placed successfully!", order });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    res
+      .status(500)
+      .json({ message: "Something went wrong. Please try after sometime." });
   }
 });
 
 // Get My Orders API
 router.get("/list", verifyToken, async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user.id })
+    const orders = await Order.find({ user: req.userId })
       .populate("products.product")
       .populate("shippingAddress"); // Populate shipping address details
     res.status(200).json(orders);
@@ -123,7 +126,7 @@ router.get("/detail/:orderId", verifyToken, async (req, res) => {
       .populate("products.product")
       .populate("shippingAddress"); // Populate shipping address details
 
-    if (!order || order.user.toString() !== req.user.id) {
+    if (!order || order.user.toString() !== req.userId) {
       return res.status(404).json({ message: "Order not found" });
     }
 
@@ -140,7 +143,7 @@ router.delete("/:orderId", verifyToken, async (req, res) => {
 
   try {
     const order = await Order.findById(orderId);
-    if (!order || order.user.toString() !== req.user.id) {
+    if (!order || order.user.toString() !== req.userId) {
       return res.status(404).json({ message: "Order not found" });
     }
 
