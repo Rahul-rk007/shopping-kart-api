@@ -100,13 +100,16 @@ router.put("/profile", verifyToken, async (req, res) => {
 // Forgot Password Endpoint
 router.post("/forgot-password", async (req, res) => {
   const { email } = req.body;
+  console.log(email);
   try {
     const user = await User.findOne({ email });
+    console.log(user);
     if (!user) return res.status(404).json({ message: "User  not found" });
 
     // Generate a reset token
     const token = crypto.randomBytes(20).toString("hex");
     user.resetPasswordToken = token;
+    console.log(token);
     user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
 
     await user.save();
@@ -128,11 +131,11 @@ router.post("/forgot-password", async (req, res) => {
       text:
         `You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n` +
         `Please click on the following link, or paste this into your browser to complete the process:\n\n` +
-        `http://localhost:5000/api/users/reset-password/${token}\n\n` +
+        `http://localhost:5173/reset-password/${token}\n\n` +
         `If you did not request this, please ignore this email and your password will remain unchanged.\n`,
     };
 
-    await transporter.sendMail(mailOptions);
+    // await transporter.sendMail(mailOptions);
     res.status(200).json({ message: "Password reset link sent to your email" });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -184,6 +187,65 @@ router.post("/change-password", verifyToken, async (req, res) => {
     await user.save();
 
     res.status(200).json({ message: "Password has been changed successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/admin/", async (req, res) => {
+  try {
+    const users = await User.find().select("-password");
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.delete("/admin/:id", async (req, res) => {
+  const { id } = req.params; // Get the user ID from the request parameters
+
+  try {
+    const user = await User.findByIdAndDelete(id); // Find and delete the user by ID
+    if (!user) return res.status(404).json({ message: "User  not found" });
+
+    res.status(200).json({ message: "User  deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/admin/user/:id", async (req, res) => {
+  const { id } = req.params; // Get the user ID from the request parameters
+  try {
+    const user = await User.findById(id).select("-password"); // Exclude password from the response
+    console.log(user);
+    
+    if (!user) {
+      return res.status(404).json({ message: "User  not found" });
+    }
+    res.status(200).json(user); // Return the user data
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update user data
+router.put("/admin/user/edit/:id", async (req, res) => {
+  const { id } = req.params; // Get the user ID from the request parameters
+  const { firstName, lastName, email, mobileNumber, birthdate, gender } = req.body; // Get the updated data from the request body
+
+  try {
+    const updatedUser  = await User.findByIdAndUpdate(
+      id,
+      { firstName, lastName, email, mobileNumber, birthdate, gender },
+      { new: true, runValidators: true } // Return the updated document and run validators
+    );
+
+    if (!updatedUser ) {
+      return res.status(404).json({ message: "User  not found" });
+    }
+
+    res.status(200).json(updatedUser ); // Return the updated user data
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

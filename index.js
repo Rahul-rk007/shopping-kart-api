@@ -1,3 +1,4 @@
+
 const express = require("express");
 const bodyParser = require("body-parser");
 const userRoutes = require("./routes/userRoutes");
@@ -19,6 +20,10 @@ const PORT = process.env.PORT || 5001;
 const uploadRoutes = require("./routes/uploadRoutes"); // Import the upload routes
 const moveRoutes = require("./routes/moveRoutes"); // Import the upload routes
 const wishlistRoutes = require("./routes/wishlistRoutes")
+const countryRoutes = require("./routes/countryRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
+
 
 // Use upload routes
 app.use(express.static(path.join(__dirname, "public"))); // Ensure this line is present
@@ -47,10 +52,14 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/order", orderRoutes);
 app.use("/api/shipping-addresses", shippingAddressRoutes);
 app.use("/api/contact", contactUsRoutes);
+app.use("/api/country", countryRoutes);
 app.use("/api/state/", stateRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/move", moveRoutes);
 app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/payment", paymentRoutes);
+
 
 // Start the server
 app.listen(PORT, () => {

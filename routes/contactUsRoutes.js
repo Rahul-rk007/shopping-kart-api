@@ -49,4 +49,52 @@ router.post('/', async (req, res) => {
     }
 });
 
+router.get('/', async (req, res) => {
+    try {
+        const messages = await ContactUs.find(); // Fetch all messages from the database
+        res.status(200).json(messages); // Return the messages as JSON
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Fetch a single Contact Us inquiry by ID
+router.get('/:id', async (req, res) => {
+    const { id } = req.params;
+    console.log('Received ID:', id);
+    try {
+        // Find the inquiry by ID
+        const message = await ContactUs.findById(id);
+
+        if (!message) {
+            return res.status(404).json({ message: 'Inquiry not found' });
+        }
+
+        res.status(200).json(message); // Return the message as JSON
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Delete a Contact Us inquiry by ID
+router.delete('/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        // Find the inquiry by ID and delete it
+        const result = await ContactUs.findByIdAndDelete(id);
+
+        if (!result) {
+            return res.status(404).json({ message: 'Inquiry not found' });
+        }
+
+        res.status(200).json({ message: 'Inquiry deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 module.exports = router;

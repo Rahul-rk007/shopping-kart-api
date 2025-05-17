@@ -3,8 +3,24 @@ const mongoose = require("mongoose");
 const Product = require("../models/Product");
 const Subcategory = require("../models/Subcategory"); // Import the Subcategory model
 const Category = require("../models/Category");
+const multer = require("multer");
+const path = require("path");
 
 const router = express.Router();
+
+
+// Set up multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/products/"); // Specify the destination folder
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname)); // Append timestamp to the file name
+  },
+});
+
+const upload = multer({ storage: storage });
+
 
 // Get Product List API
 router.get("/", async (req, res) => {
@@ -231,4 +247,168 @@ router.get("/:subcategoryId", async (req, res) => {
   }
 });
 
+
+
+
+
+// // Create a new Product (POST)
+// router.post("/admin/products", async (req, res) => {
+//   const { SubcategoryID, CategoryID, ProductName, Price, Description, ImageURLs, Color, Featured, IsActive } = req.body;
+
+//   try {
+//     const newProduct = new Product({
+//       SubcategoryID,
+//       CategoryID,
+//       ProductName,
+//       Price,
+//       Description,
+//       ImageURLs,
+//       Color,
+//       Featured,
+//       IsActive,
+//     });
+
+//     const savedProduct = await newProduct.save();
+//     res.status(201).json(savedProduct);
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// });
+
+router.post("/admin/products", upload.array("ImageURLs"), async (req, res) => {
+  const { SubcategoryID, CategoryID, ProductName, Price, Description, Color, Featured, IsActive, SKU, StockQuantity } = req.body;
+
+  // Check if files were uploaded
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).json({ error: "No images uploaded." });
+  }
+
+  // Extract image file names from the request
+  const imageURLs = req.files.map(file => file.filename); // Get the filenames of the uploaded images
+
+  try {
+    const newProduct = new Product({
+      SubcategoryID,
+      CategoryID,
+      ProductName,
+      Price,
+      Description,
+      ImageURLs: imageURLs, // Store the filenames in the database
+      Color,
+      Featured,
+      IsActive,
+      SKU, // Include SKU
+      StockQuantity // Include StockQuantity
+    });
+
+    const savedProduct = await newProduct.save();
+    res.status(201).json(savedProduct);
+  } catch (error) {
+    console.error("Error creating product:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get All Products API
+router.get("/admin/products", async (req, res) => {
+  try {
+    const products = await Product.find()
+      .populate("SubcategoryID", "SubcategoryName")
+      .populate("CategoryID", "CategoryName");
+
+    console.log("Fetched products:", products); // Log fetched products
+
+    if (!products || products.length === 0) {
+      return res.status(404).json({ message: "No products found" });
+    }
+
+    const productsWithImages = products.map((product) => {
+      return {
+        ...product.toObject(),
+        ImageURLs: product.ImageURLs.map((image) => {
+          return `${req.protocol}://${req.get("host")}/uploads/products/${image}`;
+        }),
+      };
+    });
+
+    res.status(200).json(productsWithImages);
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get a Product by ID (GET)
+router.get("/admin/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const product = await Product.findById(id)
+      .populate("SubcategoryID", "SubcategoryName")
+      .populate("CategoryID", "CategoryName");
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Construct the full URLs for each image
+    const productWithImageUrls = {
+      ...product.toObject(), // Convert mongoose document to plain object
+      ImageURLs: product.ImageURLs.map((image) => {
+        return `${req.protocol}://${req.get("host")}/uploads/products/${image}`;
+      }),
+    };
+
+    res.status(200).json(productWithImageUrls);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update a Product (PUT)
+router.put("/admin/products/:id", async (req, res) => {
+  const { id } = req.params;
+  const { SubcategoryID, CategoryID, ProductName, Price, Description, ImageURLs, Color, Featured, IsActive } = req.body;
+
+  try {
+    const updatedProduct = await Product.findByIdAndUpdate(
+      id,
+      {
+        SubcategoryID,
+        CategoryID,
+        ProductName,
+        Price,
+        Description,
+        ImageURLs,
+        Color,
+        Featured,
+        IsActive,
+      },
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedProduct) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.status(200).json(updatedProduct);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete a Product (DELETE)
+router.delete("/admin/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deletedProduct = await Product.findByIdAndDelete(id);
+    if (!deletedProduct) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    res.status(200).json({ message: "Product deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 module.exports = router;
